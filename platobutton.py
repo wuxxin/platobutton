@@ -6,6 +6,7 @@ import time
 
 import click
 import gattlib
+import gattlib.uuid
 
 
 plato_service = gattlib.uuid.gattlib_uuid_str_to_int(
@@ -96,25 +97,21 @@ class StimDevice:
 
 
 @click.command()
-@click.option("--device", help="Headset Mac Address")
-@click.option("--mode", choices=StimDevice.mode_list, help="Stimulation Type")
-@click.option("--minutes", type=int, help="Duration in Minutes")
-@click.option("--mikroampere", type=int, help="Power in Mikroampere")
+@click.option(
+    "--device",
+    help="Headset Mac Address, ([0-9A-Fa-f]{2}:){6}, get your device address using 'sudo hcitool lescan'",
+)
+@click.option(
+    "--mode",
+    type=click.Choice(StimDevice.mode_list),
+    help="TDCS Mode: RL=Create, BL=Rethink, LR=Learn, LB=Concentrate",
+)
+@click.option("--minutes", type=int, default=30, help="Duration in Minutes: 1-60")
+@click.option(
+    "--mikroampere", type=int, default=1200, help="Power in Mikroampere: 800-1600"
+)
 def cli(device, mode, minutes, mikroampere):
     """Start/Stop, select Mode, Duration and Power for Platoworks Headsets
-
-Usage: ./platobutton -d <device> [-m <mode>] [-t <minutes>] [-p <mikroampere>]
-
-+ <device>       ([0-9A-Fa-f]{2}:){6}
-    + get your device address using "sudo hcitool lescan"
-+ <mode>                (RL|BL|LR|LB)   (default= LR)
-    + RL=Create, BL=Rethink, LR=Learn, LB=Concentrate
-+ <duration in minutes>          1-60   (default= 30)
-+ <power in mikroampere>     800-1600   (default= 1200)
-
-+ while running a TDCS Session
-    + press keys "+" and "-" to increase and decrease power
-    + press key "s" to stop headset activity and exit
 """
     stim = StimDevice(device)
     stim.connect()
@@ -146,3 +143,7 @@ Usage: ./platobutton -d <device> [-m <mode>] [-t <minutes>] [-p <mikroampere>]
         time.sleep(1)
 
     stim.disconnect()
+
+
+if __name__ == "__main__":
+    cli()

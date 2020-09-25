@@ -11,18 +11,19 @@ Implements the missing pieces of the platoworks headset:
 # clone source with submodules
 git clone --recurse-submodules https://github.com/wuxxin/platobutton.git
 # install build requirements
-sudo apt install build-essential libbluetooth-dev libreadline-dev
-cd platobutton/vendor/gattlib
-mkdir build
-cd build
-cmake -D ..
+sudo apt install build-essential cmake libbluetooth-dev libreadline-dev
+# generate makefile
+mkdir platobutton/vendor/gattlib/build
+cd platobutton/vendor/gattlib/build
+cmake -DGATTLIB_BUILD_DOCS=OFF ..
+# build
 make
 # install binary libraries
 sudo make install
-cd ../../../
+cd ../../..
 python3 -m venv ./venv
-./venv/bin/activate
-pip install click ./gattlib
+. ./venv/bin/activate
+pip install click ./vendor/gattlib/gattlib-py
 ```
 
 ## Usage

@@ -1,2 +1,8 @@
-# .env is set by user, and not to be put in repo
+# environment settings by the user, not to be put in repo
 .env
+
+# python virtual env
+venv
+
+# build directory for gattlib
+vendor/gattlib/build
