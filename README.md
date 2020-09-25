@@ -5,6 +5,12 @@ Implements the missing pieces of the platoworks headset:
 + Buttons to select mode, time, power, start and stop
 + Offline mode (no internet access, mobile phone, gps location required)
 
+## Todo/FIXME
+
++ implement terminal_input_available by looking at
+    + https://github.com/pallets/click/blob/97fde8bf50058c19a77d4de46b9c54b1731b1750/src/click/_termui_impl.py#L642
++ implement to shutdown headset if program is aborted (CTRL-C)
+
 ## Build
 
 ```
@@ -150,37 +156,39 @@ pip install click ./vendor/gattlib/gattlib-py
 ```
 
 + Example Session
-  + W: "4,L,B,040,1800/0"
-  + R: 2,000,406,001,0007
-  + Loop
-    + W: "0/0"
-    + R: 4,000,403,001,0046
-    + R: 4,001,403,016,0420
-    + R: 4,002,403,030,0697
-    + R: 5,003,403,042,0849
-    + R: 5,004,403,042,0822
-    + R: 5,005,403,042,0814
-  + Loop
-    + W: "0/0"
-    + R: 5,Increase of 1, ~403, ~042, ~ 700-850
-  + W: "5,060"
-  + R: "4,0012,403,042,0701"
+```
++ W: "4,L,B,040,1800/0"
++ R: 2,000,406,001,0007
++ Loop
   + W: "0/0"
-  + R: "4,0012,404,042,0693"
-  + W: "5,060"
-  + R: "4,0013,404,057,0830"
+  + R: 4,000,403,001,0046
+  + R: 4,001,403,016,0420
+  + R: 4,002,403,030,0697
+  + R: 5,003,403,042,0849
+  + R: 5,004,403,042,0822
+  + R: 5,005,403,042,0814
++ Loop
   + W: "0/0"
-  + R: "4,0013,404,057,0826"
-  + Loop
-    + W: "0/0"
-    + R: "4,0013-0017,402-404,057-115,0826 - 1251
-  + Loop
-    + W: "0/0"
-    + R: "5,0018-0030,402,122-142,1024-1227"
-  + W: "6/0"
-  + R: "6,0042,402,142,1114"
+  + R: 5,Increase of 1, ~403, ~042, ~ 700-850
++ W: "5,060"
++ R: "4,0012,403,042,0701"
++ W: "0/0"
++ R: "4,0012,404,042,0693"
++ W: "5,060"
++ R: "4,0013,404,057,0830"
++ W: "0/0"
++ R: "4,0013,404,057,0826"
++ Loop
   + W: "0/0"
-  + R: "6,0043,402,142,1118"
-  + R: "6,time,402,decreasing in steps of ~20,decreasing in steps of ~100"
-  + 113,958 99,884 84,802 70,720 55,627 41,537 26,432 11,315
-  + R: "7, 0053, 405, 000,0000"
+  + R: "4,0013-0017,402-404,057-115,0826 - 1251
++ Loop
+  + W: "0/0"
+  + R: "5,0018-0030,402,122-142,1024-1227"
++ W: "6/0"
++ R: "6,0042,402,142,1114"
++ W: "0/0"
++ R: "6,0043,402,142,1118"
++ R: "6,time,402,decreasing in steps of ~20,decreasing in steps of ~100"
++ 113,958 99,884 84,802 70,720 55,627 41,537 26,432 11,315
++ R: "7, 0053, 405, 000,0000"
+```

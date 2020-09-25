@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import argparse
 import sys
 import time
 
@@ -111,8 +110,7 @@ class StimDevice:
     "--mikroampere", type=int, default=1200, help="Power in Mikroampere: 800-1600"
 )
 def cli(device, mode, minutes, mikroampere):
-    """Start/Stop, select Mode, Duration and Power for Platoworks Headsets
-"""
+    "Start/Stop, select Mode, Duration and Power for Platoworks Headsets"
     stim = StimDevice(device)
     stim.connect()
     status = stim.start(mode, minutes)
