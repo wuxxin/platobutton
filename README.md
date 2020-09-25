@@ -1,31 +1,38 @@
 # PlatoButton
 
-Implements in software what the headset hardware is missing:
+Implements the missing pieces of the platoworks headset:
 
 + Buttons to select mode, time, power, start and stop
 + Offline mode (no internet access, mobile phone, gps location required)
 
-## Usage
+## Build
 
-./platobutton.py [-d <device>] [-m <mode>] [-t <minutes>] [-p <mikroampere>]
-
-Press "s" to stop, "+" to increase and "-" to decrease powerlevel
-
-## build requirements
-
-+ https://github.com/labapart/gattlib
 ```
-sudo apt install libbluetooth-dev libreadline-dev
-git clone https://github.com/labapart/gattlib.git
-cd gattlib
+# clone source with submodules
+git clone --recurse-submodules https://github.com/wuxxin/platobutton.git
+# install build requirements
+sudo apt install build-essential libbluetooth-dev libreadline-dev
+cd platobutton/vendor/gattlib
 mkdir build
 cd build
 cmake -D ..
 make
+# install binary libraries
 sudo make install
+cd ../../../
+python3 -m venv ./venv
+./venv/bin/activate
+pip install click ./gattlib
 ```
 
-## Protocol
+## Usage
+
+```
+./venv/bin/activate
+./platobutton.py [-d <device>] [-m <mode>] [-t <minutes>] [-p <mikroampere>]
+```
+
+## Bluetooth Protocol
 
 + Presetup / Discovery
     + plato_service = "e8f22220-9796-42a1-92ef-f65a7f9d6d79"
@@ -42,18 +49,7 @@ sudo make install
 
 ### Commands
 
-+ "F": Get Firmware Version
-    + Write "F"
-    + Read "1,v31"+ Binarybyte (00) ?
-    + or sometimes after usage and stop Read "7,v31"
-
-+ "#": Get Headset Serial
-    + Write "#"
-    + Read "#,01234567 89ABCDEF"
-      + F1: 4 Bytes Hexadecimal: Serial ?
-      + F2: 4 Bytes Hexadecimal: Last 4 Bytes of BLE Adress
-
-+ "0/0": Get Status (usually once per second)
++ "0/0": Get Status (usually called once per second while active session)
     + Write "0/0"
     + read "1,0000,408,000,0000"
     + eq."F1:1-7,F2:0000-1800,F3:400-408,F4:000-140,F5:0000-1300"
@@ -93,6 +89,17 @@ sudo make install
 + "6/0": Stop Programm
     + Write "6/0"
 
++ "F": Get Firmware Version
+    + Write "F"
+    + Read "1,v31"+ Binarybyte (00) ?
+    + or sometimes after usage and stop Read "7,v31"
+
++ "#": Get Headset Serial
+    + Write "#"
+    + Read "#,01234567 89ABCDEF"
+      + F1: 4 Bytes Hexadecimal: Serial ?
+      + F2: 4 Bytes Hexadecimal: Last 4 Bytes of BLE Adress
+
 #### Unknown Commands
 
 + seen,   unsure:  Write "A": Abort /Suspend ? Program
@@ -100,12 +107,13 @@ sudo make install
 + seen,   unknown: Write "2"
 + unseen, missing: Write "3"
 
-### Protocol Dump
+### Observed Values
 
 + Write
     + plato_write_uuid = "e8f20002-9796-42a1-92ef-f65a7f9d6d79"
     + (G)ATT Write Request (0x12), Handle: 0x0014
     + (G)ATT Write Response (0x13), Handle: 0x0014
+    + Format: <Command:[AF#02456]>[,<parameter>+][<"/0">]
     + Observed Value List
 ```
 "F"
@@ -125,6 +133,7 @@ sudo make install
     + plato_read_uuid = "e8f20001-9796-42a1-92ef-f65a7f9d6d79"
     + (G)ATT Read Request (0x0a), Handle: 0x0011
     + (G)ATT Read Response (0x0b), Handle: 0x0011
+    + Format: <Status>[,<value>+]
     + Observed Example Value List
 ```
 "1,v31"+ 00
@@ -139,24 +148,17 @@ sudo make install
 "7,0008,408,000,0000"
 ```
 
-+ Example Session 1
-  + W: "4,L,R,040,1800/0"
-  + R: 2,053,404,001,0015
-  + W: "0/0" once per second
-  + R: 4,077,403,001,0109
-    + 01,132 16,296 30,381
-  + R: 5,080,403,042,432
-
-+ Example Session 2
++ Example Session
   + W: "4,L,B,040,1800/0"
   + R: 2,000,406,001,0007
-  + W: "0/0" once per second
-  + R: 4,000,403,001,0046
-  + R: 4,001,403,016,0420
-  + R: 4,002,403,030,0697
-  + R: 5,003,403,042,0849
-  + R: 5,004,403,042,0822
-  + R: 5,005,403,042,0814
+  + Loop
+    + W: "0/0"
+    + R: 4,000,403,001,0046
+    + R: 4,001,403,016,0420
+    + R: 4,002,403,030,0697
+    + R: 5,003,403,042,0849
+    + R: 5,004,403,042,0822
+    + R: 5,005,403,042,0814
   + Loop
     + W: "0/0"
     + R: 5,Increase of 1, ~403, ~042, ~ 700-850

@@ -1,0 +1,3 @@
+[submodule "vendor/gattlib"]
+	path = vendor/gattlib
+	url = https://github.com/labapart/gattlib.git

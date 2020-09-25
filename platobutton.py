@@ -2,6 +2,9 @@
 
 import argparse
 import sys
+import time
+
+import click
 import gattlib
 
 
@@ -14,6 +17,10 @@ plato_read_uuid = gattlib.uuid.gattlib_uuid_str_to_int(
 plato_write_uuid = gattlib.uuid.gattlib_uuid_str_to_int(
     "e8f20002-9796-42a1-92ef-f65a7f9d6d79"
 )
+
+
+def terminal_input_available():
+    return False
 
 
 class StimDevice:
@@ -56,7 +63,7 @@ class StimDevice:
         value = False
         self.write_handle.write(bytearray(cmdstring, "utf-8"))
         value = self.read_handle.read()
-        print(
+        click.echo(
             "tdcs_event{device={},cmd={},result={}} {}".format(
                 self.mac, cmdstring, value, unixtime
             )
@@ -88,8 +95,14 @@ class StimDevice:
         return self.cmd("6/0")
 
 
-def main():
-    """
+@click.command()
+@click.option("--device", help="Headset Mac Address")
+@click.option("--mode", choices=StimDevice.mode_list, help="Stimulation Type")
+@click.option("--minutes", type=int, help="Duration in Minutes")
+@click.option("--mikroampere", type=int, help="Power in Mikroampere")
+def cli(device, mode, minutes, mikroampere):
+    """Start/Stop, select Mode, Duration and Power for Platoworks Headsets
+
 Usage: ./platobutton -d <device> [-m <mode>] [-t <minutes>] [-p <mikroampere>]
 
 + <device>       ([0-9A-Fa-f]{2}:){6}
@@ -99,32 +112,20 @@ Usage: ./platobutton -d <device> [-m <mode>] [-t <minutes>] [-p <mikroampere>]
 + <duration in minutes>          1-60   (default= 30)
 + <power in mikroampere>     800-1600   (default= 1200)
 
-+ while running, press key:
-    + "+" to increase power
-    + "-" to decrease power
-    + "s" to stop programm
++ while running a TDCS Session
+    + press keys "+" and "-" to increase and decrease power
+    + press key "s" to stop headset activity and exit
 """
-    parser = argparse.ArgumentParser(
-        description="Start/Stop, select Mode, Duration and Power for Platoworks Headsets"
-    )
-    parser.add_argument("device", type=str, help="Headset Mac Address")
-    parser.add_argument(
-        "mode", type=str, choices=StimDevice.mode_list, help="Stimulation Type"
-    )
-    parser.add_argument("minutes", type=int, help="Duration in Minutes")
-    parser.add_argument("mikroampere", type=int, help="Power in Mikroampere")
-    args = parser.parse_args()
-
-    stim = StimDevice(args.device)
+    stim = StimDevice(device)
     stim.connect()
-    status = stim.start(args.mode, args.minutes)
-
+    status = stim.start(mode, minutes)
     # set power if != default power after first cyclus of "5"'s
-    stim_power = args.mikroampere
+    stim_power = mikroampere
 
     while status[0] != "0" and status[0] != "7":
-        sleep(1)
-        if keypress:
+        time.sleep(1)
+        if terminal_input_available():
+            key = click.getchar()
             if key == "s":
                 status = stim.stop()
             elif key == "+":
@@ -140,8 +141,8 @@ Usage: ./platobutton -d <device> [-m <mode>] [-t <minutes>] [-p <mikroampere>]
 
     while status[0] != "0" and status[0] != "7":
         status = stim.stop()
-        sleep(1)
+        time.sleep(1)
         status = stim.status()
-        sleep(1)
+        time.sleep(1)
 
     stim.disconnect()
