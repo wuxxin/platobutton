@@ -3,7 +3,9 @@
 Implements the missing pieces of the platoworks headset:
 
 + Buttons to select mode, time, power, start and stop
-+ Offline mode (no internet access, mobile phone, gps location required)
++ Offline mode (no internet access, mobile phone, gps location, identity required)
+
++ Bluetooth-LE gattlib access is done with: https://github.com/labapart/gattlib.git
 
 ## Todo/FIXME
 
@@ -14,7 +16,7 @@ Implements the missing pieces of the platoworks headset:
 ## Build
 
 ```
-# clone source with submodules
+# clone this source with submodules
 git clone --recurse-submodules https://github.com/wuxxin/platobutton.git
 # install build requirements
 sudo apt install build-essential cmake libbluetooth-dev libreadline-dev
@@ -27,6 +29,7 @@ make
 # install binary libraries
 sudo make install
 cd ../../..
+# create virtual python environment, install click and gattlib
 python3 -m venv ./venv
 . ./venv/bin/activate
 pip install click ./vendor/gattlib/gattlib-py
@@ -58,9 +61,7 @@ pip install click ./vendor/gattlib/gattlib-py
 
 + "0/0": Get Status (usually called once per second while active session)
     + Write "0/0"
-    + read "1,0000,408,000,0000"
-    + eq."F1:1-7,F2:0000-1800,F3:400-408,F4:000-140,F5:0000-1300"
-
+    + read "F1:1-7,F2:0000-1800,F3:400-408,F4:000-140,F5:0000-1300" eg. "1,0000,408,000,0000"
       + F1: Activity State (1-7)
         + 1: Idle
         + 2: Acknowledge Programstart
@@ -104,7 +105,7 @@ pip install click ./vendor/gattlib/gattlib-py
 + "#": Get Headset Serial
     + Write "#"
     + Read "#,01234567 89ABCDEF"
-      + F1: 4 Bytes Hexadecimal: Serial ?
+      + F1: 4 Bytes Hexadecimal: another Device Serial ?
       + F2: 4 Bytes Hexadecimal: Last 4 Bytes of BLE Adress
 
 #### Unknown Commands
