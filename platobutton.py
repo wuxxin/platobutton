@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
 import time
 
 import click
@@ -65,7 +64,7 @@ class StimDevice:
         value = self.read_handle.read()
         click.echo(
             "tdcs_event{device={},cmd={},result={}} {}".format(
-                self.mac, cmdstring, value, unixtime
+                self.mac, cmdstring, value, int(time.time())
             )
         )
         return value
@@ -96,10 +95,7 @@ class StimDevice:
 
 
 @click.command()
-@click.option(
-    "--device",
-    help="Headset Mac Address, ([0-9A-Fa-f]{2}:){6}, get your device address using 'sudo hcitool lescan'",
-)
+@click.option("--device", help="Headset Mac Address, ([0-9A-Fa-f]{2}:){6}")
 @click.option(
     "--mode",
     type=click.Choice(StimDevice.mode_list),
@@ -110,37 +106,50 @@ class StimDevice:
     "--mikroampere", type=int, default=1200, help="Power in Mikroampere: 800-1600"
 )
 def cli(device, mode, minutes, mikroampere):
-    "Start/Stop, select Mode, Duration and Power for Platoworks Headsets"
+    """Start/Stop, select Mode, Duration and Power for Platoworks Headsets
+get your device address using 'sudo hcitool lescan'
+    """
     stim = StimDevice(device)
     stim.connect()
-    status = stim.start(mode, minutes)
-    # set power if != default power after first cyclus of "5"'s
-    stim_power = mikroampere
 
-    while status[0] != "0" and status[0] != "7":
-        time.sleep(1)
-        if terminal_input_available():
-            key = click.getchar()
-            if key == "s":
-                status = stim.stop()
-            elif key == "+":
-                stim_power = stim_power + 100
-                status = stim.power_change(stim_power)
-            elif key == "-":
-                stim_power = stim_power - 100
-                status = stim.power_change(stim_power)
+    try:
+        status = stim.start(mode, minutes)
+        stim_power = mikroampere
+        start_time = time.time()
+        stim_active = False
+        stim_stopping = False
+
+        while status[0] != "0" and status[0] != "7":
+            time.sleep(1)
+            if (time.time() - start_time > (minutes * 60)) and not stim_stopping:
+                stim_stopping = True
+                stim.stop()
+            if status[0] == "5" and not stim_active:
+                stim_active = True
+                stim.power_change(stim_power)
+            if terminal_input_available():
+                key = click.getchar()
+                if key == "s":
+                    status = stim.stop()
+                elif key == "+":
+                    stim_power = stim_power + 100
+                    status = stim.power_change(stim_power)
+                    stim_power = stim.power
+                elif key == "-":
+                    stim_power = stim_power - 100
+                    status = stim.power_change(stim_power)
+                    stim_power = stim.power
+                else:
+                    status = stim.status()
             else:
                 status = stim.status()
-        else:
+    except:
+        while status[0] != "0" and status[0] != "7":
+            status = stim.stop()
+            time.sleep(1)
             status = stim.status()
-
-    while status[0] != "0" and status[0] != "7":
-        status = stim.stop()
-        time.sleep(1)
-        status = stim.status()
-        time.sleep(1)
-
-    stim.disconnect()
+            time.sleep(1)
+        stim.disconnect()
 
 
 if __name__ == "__main__":
