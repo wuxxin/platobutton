@@ -132,12 +132,10 @@ get your device address using 'sudo hcitool lescan'
                 if key == "s":
                     status = stim.stop()
                 elif key == "+":
-                    stim_power = stim_power + 100
-                    status = stim.power_change(stim_power)
+                    status = stim.power_change(stim_power + 100)
                     stim_power = stim.power
                 elif key == "-":
-                    stim_power = stim_power - 100
-                    status = stim.power_change(stim_power)
+                    status = stim.power_change(stim_power - 100)
                     stim_power = stim.power
                 else:
                     status = stim.status()
